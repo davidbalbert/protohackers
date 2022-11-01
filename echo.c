@@ -109,7 +109,7 @@ main(int argc, char *argv[])
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
-    error = getaddrinfo(NULL, "7", &hints, &res);
+    error = getaddrinfo(NULL, "echo", &hints, &res);
     if (error != 0) {
         panic(gai_strerror(error));
     }
