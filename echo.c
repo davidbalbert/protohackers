@@ -29,7 +29,8 @@ xerror(void)
     panic(strerror(errno));
 }
 
-void log_connection(struct sockaddr *sa)
+void
+print_sockaddr(struct sockaddr *sa)
 {
     assert(INET_ADDRSTRLEN < INET6_ADDRSTRLEN);
     char addr[INET6_ADDRSTRLEN];
@@ -44,7 +45,15 @@ void log_connection(struct sockaddr *sa)
         panic("unknown sa_family");
     }
 
-    printf("Connected to %s\n", addr);
+    printf("%s", addr);
+}
+
+void
+log_connection(struct sockaddr *sa)
+{
+    printf("Connection from ");
+    print_sockaddr(sa);
+    printf("\n");
 }
 
 // Unlike send(2), which returns -1 on error, sendall returns the number
