@@ -47,6 +47,47 @@ void log_connection(struct sockaddr *sa)
     printf("Connected to %s\n", addr);
 }
 
+// Unlike send(2), which returns -1 on error, sendall returns the number
+// of total bytes sent, and ret != length indicates an error;
+ssize_t
+sendall(int socket, void *buffer, size_t length, int flags)
+{
+    size_t nremain = length;
+    char *p = buffer;
+
+    do {
+        size_t nsent = send(socket, p, nremain, flags);
+        if (nsent == -1) {
+            return length - nremain;
+        }
+
+        nremain -= nsent;
+        p += nsent;
+    } while (nremain > 0);
+    
+    return length;
+}
+
+void
+handle_connection(int socket)
+{
+    char buf[1024];
+    ssize_t nrecvd;
+    do {
+        nrecvd = recv(socket, buf, sizeof(buf), 0);
+        if (nrecvd == -1) {
+            xerror();
+        }
+
+        ssize_t nsent = sendall(socket, buf, nrecvd, 0);
+        if (nsent != nrecvd) {
+            xerror();
+        }
+    } while (nrecvd != 0);
+
+    close(socket);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -96,28 +137,7 @@ main(int argc, char *argv[])
         }
 
         log_connection((struct sockaddr *)&addr);
-
-        char buf[1024];
-        ssize_t nrecvd = 0, nsent = 0, nremain = 0;
-        do {
-            nremain = nrecvd = recv(s, buf, sizeof(buf), 0);
-            if (nrecvd == -1) {
-                xerror();
-            }
-
-            char *p = buf;
-            do {
-                nsent = send(s, p, nremain, 0);
-                if (nsent == -1) {
-                    xerror();
-                }
-
-                nremain -= nsent;
-                p += nsent;
-            } while (nremain > 0);
-        } while (nrecvd != 0);
-
-        close(s);
+        handle_connection(s);
     }
 
     return 0;
